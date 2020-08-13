@@ -39,6 +39,7 @@ import re
 import sys
 import os
 import shutil
+import requests
 
 
 websites = {
@@ -61,6 +62,7 @@ class Browser:
         return file
 
     def load_page(self, url):
+        path = re.sub(r'(http(s)?:\/\/)', '', url)
         path = self.save_dir + '/' + url + '.txt'
         if os.path.exists(path):
             if self.current_page:
@@ -72,12 +74,21 @@ class Browser:
             self.download_page(url)
 
     def download_page(self, url):
-        if check_url(url) and url in websites:
-            content = websites[url]
+        if check_url(url):
+            if not url.startswith('http'):
+                url = "https://" + url
+            r = requests.get(url)
+            if r:
+                content = r.text
+            else:
+                print("Error")
+                return
+
             file_name = url[:url.rfind('.')]
-            if not os.path.exists(file_name):
-                with open(self.save_dir + '/' + file_name + '.txt', 'w') as file:
-                    file.write(content)
+            file_name = re.sub(r'(http(s)?:\/\/)', '', file_name)
+            with open(self.save_dir + '/' + file_name + '.txt', 'w') as file:
+                file.write(content)
+
             self.load_page(file_name)
         else:
             print("Error: Incorrect URL")
@@ -96,8 +107,7 @@ class Browser:
                 print("Error: %s - %s." % (e.filename, e.strerror))
 
 def check_url(url):
-    return re.match(r'^([a-z]+\w*)(\.([a-z]+\w*)+)+$', url.lower())
-
+    return re.match(r'^(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$', url.lower())
 
 def main():
     browser = Browser() if len(sys.argv) == 1 else Browser(sys.argv[1])
