@@ -5,19 +5,13 @@ import shutil
 import requests
 
 
-websites = {
-    "bloomberg.com": bloomberg_com,
-    "nytimes.com": nytimes_com
-}
-
-
 class Browser:
     def __init__(self, file=None):
-        self.save_dir = self.make_dowload_dir(file)
+        self.save_dir = self.make_download_dir(file)
         self.history = []
         self.current_page = None
 
-    def make_dowload_dir(self, file):
+    def make_download_dir(self, file):
         if file is None:
             file = "tmp"
         if not os.path.exists(file):
@@ -25,8 +19,8 @@ class Browser:
         return file
 
     def load_page(self, url):
-        path = re.sub(r'(http(s)?:\/\/)', '', url)
-        path = self.save_dir + '/' + url + '.txt'
+        path = re.sub(r'(http(s)?://)', '', url)
+        path = self.save_dir + '/' + path + '.txt'
         if os.path.exists(path):
             if self.current_page:
                 self.history.append(self.current_page)
@@ -48,7 +42,7 @@ class Browser:
                 return
 
             file_name = url[:url.rfind('.')]
-            file_name = re.sub(r'(http(s)?:\/\/)', '', file_name)
+            file_name = re.sub(r'(http(s)?://)', '', file_name)
             with open(self.save_dir + '/' + file_name + '.txt', 'w') as file:
                 file.write(content)
 
@@ -69,8 +63,10 @@ class Browser:
             except OSError as e:
                 print("Error: %s - %s." % (e.filename, e.strerror))
 
+
 def check_url(url):
-    return re.match(r'^(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$', url.lower())
+    return re.match(r'^(http(s)?://.)?(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&/=]*)$', url.lower())
+
 
 def main():
     browser = Browser() if len(sys.argv) == 1 else Browser(sys.argv[1])
@@ -84,7 +80,6 @@ def main():
             browser.previous()
         else:
             browser.load_page(command)
-
 
 
 if __name__ == '__main__':
