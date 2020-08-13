@@ -3,12 +3,14 @@ import sys
 import os
 import shutil
 import requests
-
+from bs4 import BeautifulSoup
+from collections import deque
+from colorama import init, Fore
 
 class Browser:
     def __init__(self, file=None):
         self.save_dir = self.make_download_dir(file)
-        self.history = []
+        self.history = deque()
         self.current_page = None
 
     def make_download_dir(self, file):
@@ -36,7 +38,7 @@ class Browser:
                 url = "https://" + url
             r = requests.get(url)
             if r:
-                content = r.text
+                content = parse_page(r.content)
             else:
                 print("Error")
                 return
@@ -53,8 +55,8 @@ class Browser:
     def previous(self):
         if self.history:
             file_name = self.history.pop()
-            with open(self.save_dir + '/' + file_name + '.txt', 'r') as file:
-                print(file.read())
+            self.current_page = None
+            self.load_page(file_name)
 
     def exit(self):
         if self.save_dir == "tmp":
@@ -63,6 +65,23 @@ class Browser:
             except OSError as e:
                 print("Error: %s - %s." % (e.filename, e.strerror))
 
+
+def parse_page(content):
+    include_tags = ['title', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'ul', 'ol', 'li']
+    def text_tag(e):
+        return e.parent.name in include_tags
+    soup = BeautifulSoup(content, 'html.parser')
+    texts = soup.findAll(text=True)
+    visible_texts=[]
+    for i in texts:
+        if i.parent.name in include_tags:
+            if i.parent.name == 'a':
+                i = Fore.BLUE + i
+            else:
+                i = Fore.WHITE + i
+            visible_texts.append(i)
+    #visible_texts = filter(text_tag, texts)
+    return "\n".join(t.strip() for t in visible_texts)
 
 def check_url(url):
     return re.match(r'^(http(s)?://.)?(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&/=]*)$', url.lower())
