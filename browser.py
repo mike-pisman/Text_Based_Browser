@@ -110,7 +110,11 @@ def main():
 
     # Get commands
     while True:
-        command = input('> ').strip()
+        print(Fore.RED + 'Text-Based Browser by Mikhail Pisman')
+        print(Fore.GREEN + "\t- Please, enter: url of the page you would like to visit")
+        print('\t- "back" to print previously visited page')
+        print('\t- "exit" to exit the program')
+        command = input(Fore.WHITE + '> ').strip()
         # Stop applications
         if command == 'exit':
             browser.exit()
